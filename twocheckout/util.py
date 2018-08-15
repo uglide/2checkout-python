@@ -15,7 +15,6 @@ class Util:
         i = 0
         lineitems = dict()
         for lineitem_id in invoice.lineitems:
-            if lineitem_id.billing.recurring_status == 'active':
-                lineitems[i] = lineitem_id['lineitem_id']
-                i += 1
+            lineitems[i] = lineitem_id['lineitem_id']
+            i += 1
         return lineitems

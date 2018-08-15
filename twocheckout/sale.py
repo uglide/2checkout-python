@@ -40,7 +40,7 @@ class Sale(Twocheckout):
             params = dict()
         if 'lineitem_id' in self:
             params['lineitem_id'] = self.lineitem_id
-            return Api.call('sales/stop_lineitem_recurring', params)
+            return Api.call('sales/stop_lineitem_recurring', params, "POST")
         elif 'sale_id' in self:
             active_lineitems = Util.active(self)
             if dict(active_lineitems):
@@ -49,7 +49,7 @@ class Sale(Twocheckout):
                 for k, v in list(active_lineitems.items()):
                     lineitem_id = v
                     params = {'lineitem_id': lineitem_id}
-                    result[i] = Api.call('sales/stop_lineitem_recurring', params)
+                    result[i] = Api.call('sales/stop_lineitem_recurring', params, "POST")
                     i += 1
                 response = { "response_code": "OK",
                              "response_message": str(len(result)) + " lineitems stopped successfully"

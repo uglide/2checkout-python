@@ -27,13 +27,13 @@ class Api:
             Api.mode = credentials['mode']
 
     @classmethod
-    def call(cls, method, params=None):
+    def call(cls, action, params=None, method="GET"):
         if params is None:
             params = {}
 
         auth = None
 
-        if method == 'authService':
+        if action == 'authService':
             params['sellerId'] = cls.seller_id
             params['privateKey'] = cls.private_key
             headers = {
@@ -48,11 +48,18 @@ class Api:
                 'User-Agent': '2Checkout Python/0.1.0/%s'
             }
 
-        url = cls.build_url(method)
+        url = cls.build_url(action)
+
+        if method == "POST":
+            data = params
+            params = {}
+        else:
+            data = None
 
         try:
-            response = requests.get(
-                url, headers=headers, auth=auth, params=params
+            response = requests.request(
+                method, url, headers=headers, auth=auth, params=params,
+                data=data, allow_redirects=True
             )
 
             return response.json()
