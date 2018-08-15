@@ -1,7 +1,5 @@
-import urllib.request
-import urllib.parse
-import urllib.error
-import json
+import requests
+
 from .error import TwocheckoutError
 
 
@@ -30,64 +28,36 @@ class Api:
 
     @classmethod
     def call(cls, method, params=None):
-        data = cls.set_opts(method, params)
-        url = cls.build_url(method)
-        headers = cls.build_headers(method)
-        try:
-            binary_data = data.encode('ascii')
-            req = urllib.request.Request(url, binary_data, headers)
-            raw_data = urllib.request.urlopen(req).read()
-            result = raw_data.decode('utf-8')
-            return json.loads(result)
-        except urllib.error.HTTPError as e:
-            if not hasattr(e, 'read'):
-                raise TwocheckoutError(e.code, e.msg)
-            else:
-                raw_data = e.read()
-                result = raw_data.decode('utf-8')
-                exception = json.loads(result)
-                if method == 'authService':
-                    raise TwocheckoutError(exception['exception']['errorCode'], exception['exception']['errorMsg'])
-                else:
-                    raise TwocheckoutError(exception['errors'][0]['code'], exception['errors'][0]['message'])
+        if params is None:
+            params = {}
 
-    @classmethod
-    def set_opts(cls, method, params=None):
+        auth = None
+
         if method == 'authService':
             params['sellerId'] = cls.seller_id
             params['privateKey'] = cls.private_key
-            data = json.dumps(params)
-        else:
-            username = cls.username
-            password = cls.password
-            if cls.mode == 'sandbox':
-                passwd_url = 'https://sandbox.2checkout.com'
-            else:
-                passwd_url = 'https://www.2checkout.com'
-            data = urllib.parse.urlencode(params)
-            password_manager = urllib.request.HTTPPasswordMgrWithDefaultRealm()
-            password_manager.add_password(
-                None, passwd_url, username, password
-            )
-            auth_handler = urllib.request.HTTPBasicAuthHandler(password_manager)
-            opener = urllib.request.build_opener(auth_handler)
-            urllib.request.install_opener(opener)
-        return data
-
-    @classmethod
-    def build_headers(cls, method):
-        if method == 'authService':
             headers = {
                 'Accept': 'application/json',
                 'User-Agent': '2Checkout Python/0.1.0/%s',
                 'Content-Type': 'application/JSON'
             }
         else:
+            auth = (cls.username, cls.password)
             headers = {
                 'Accept': 'application/json',
                 'User-Agent': '2Checkout Python/0.1.0/%s'
             }
-        return headers
+
+        url = cls.build_url(method)
+
+        try:
+            response = requests.get(
+                url, headers=headers, auth=auth, params=params
+            )
+
+            return response.json()
+        except Exception as e:
+            raise TwocheckoutError("", str(e))
 
     @classmethod
     def build_url(cls, method):
